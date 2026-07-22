@@ -138,14 +138,17 @@ function Find-VsDevCmd {
         throw '未找到 vswhere.exe。请安装 Visual Studio 2022 的“使用 C++ 的桌面开发”工作负载。'
     }
 
-    $installationPath = & $vswhere `
+    # pwsh 7.6 在原生命令直接接 PowerShell 管道时不会更新 $LASTEXITCODE，
+    # 因此先单独执行命令并保存退出码，再从文本输出中选择第一条路径。
+    $installationPaths = & $vswhere `
         -latest `
         -products '*' `
         -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-        -property installationPath |
-        Select-Object -First 1
+        -property installationPath
+    $vswhereExitCode = $LASTEXITCODE
+    $installationPath = $installationPaths | Select-Object -First 1
 
-    if ($LASTEXITCODE -ne 0 -or [System.String]::IsNullOrWhiteSpace($installationPath)) {
+    if ($vswhereExitCode -ne 0 -or [System.String]::IsNullOrWhiteSpace($installationPath)) {
         throw 'Visual Studio 2022 尚未安装 MSVC v143 x64/x86 工具。请在 Visual Studio Installer 中修改安装，并勾选“使用 C++ 的桌面开发”。'
     }
 
