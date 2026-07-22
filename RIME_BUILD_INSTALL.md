@@ -50,7 +50,17 @@ weasel-0.17.4.0.93eec2d-installer.exe
 - Python；
 - NSIS，用于生成 `.exe` 安装包；
 - Boost 1.84.0 源码。
-### 安装boost
+### 安装 Boost
+
+推荐直接运行仓库中的辅助脚本：
+
+```powershell
+.\install_boost.bat
+```
+
+脚本使用 Windows PowerShell 下载官方 ZIP，并显示下载进度；随后校验 SHA256、解压到 `deps\boost_1_84_0`，然后编译 Boost。它不需要额外安装 aria2 或 7-Zip；下载、校验或解压任一步失败时都会立即停止。
+
+如果需要手工下载，可使用下面的 PowerShell 命令。
 
 本仓库的 CI 使用 Boost 1.84.0。推荐从 Boost 官方归档下载 1.84.0 ZIP。可以在 Developer PowerShell 中执行：
 
@@ -98,8 +108,6 @@ Test-Path "${env:ProgramFiles(x86)}\NSIS\Bin\makensis.exe"
 ```
 
 输出应为 `True`。
-
-### 
 
 ## 3. 使用正确的命令行
 
