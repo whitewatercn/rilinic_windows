@@ -1,6 +1,35 @@
-set nsis_version=3.08
+@echo off
+setlocal
 
-mkdir deps
-powershell -c "iwr -UserAgent \"Wget\" -Uri \"https://sourceforge.net/projects/nsis/files/NSIS%%203/%nsis_version%/nsis-%nsis_version%-setup.exe/download\" -OutFile deps\nsis-setup.exe"
-deps\nsis-setup.exe /S
+set "MAKENSIS=%ProgramFiles(x86)%\NSIS\Bin\makensis.exe"
+
+if exist "%MAKENSIS%" (
+  echo NSIS is already installed:
+  echo   "%MAKENSIS%"
+  exit /b 0
+)
+
+where winget.exe >nul 2>&1
+if errorlevel 1 (
+  echo Error: winget.exe was not found.
+  echo Install NSIS manually from https://nsis.sourceforge.io/Download
+  exit /b 1
+)
+
+echo Installing NSIS with winget...
+winget install --id NSIS.NSIS --exact --source winget --silent --accept-package-agreements --accept-source-agreements
+if errorlevel 1 (
+  echo Error: winget failed to install NSIS.
+  exit /b 1
+)
+
+if not exist "%MAKENSIS%" (
+  echo Error: NSIS installation finished, but makensis.exe was not found at:
+  echo   "%MAKENSIS%"
+  exit /b 1
+)
+
+echo NSIS installed successfully:
+echo   "%MAKENSIS%"
+exit /b 0
 

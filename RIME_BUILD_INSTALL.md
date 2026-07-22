@@ -50,6 +50,7 @@ weasel-0.17.4.0.93eec2d-installer.exe
 - Python；
 - NSIS，用于生成 `.exe` 安装包；
 - Boost 1.84.0 源码。
+### 安装boost
 
 本仓库的 CI 使用 Boost 1.84.0。推荐从 Boost 官方归档下载 1.84.0 ZIP。可以在 Developer PowerShell 中执行：
 
@@ -82,9 +83,23 @@ set BOOST_ROOT=%WEASEL_ROOT%\deps\boost_1_84_0
 `build.bat boost` 会自行运行 `bootstrap.bat` 和 `b2`，不需要预先手工编译 Boost。
 
 
-### 安装nsis
+### 安装 NSIS
 
-仓库也提供 `install_nsis.bat`，它会联网下载 NSIS 3.08 并静默安装。执行它会安装第三方软件，因此请先确认脚本内容和目标机器的安装策略。
+在仓库根目录运行辅助脚本。它会先检查默认安装位置；如果 NSIS 已安装则直接跳过，否则调用 winget 安装，并在安装失败时立即停止：
+
+```powershell
+.\install_nsis.bat
+```
+
+验证构建脚本需要的 `makensis.exe`：
+
+```powershell
+Test-Path "${env:ProgramFiles(x86)}\NSIS\Bin\makensis.exe"
+```
+
+输出应为 `True`。
+
+### 
 
 ## 3. 使用正确的命令行
 
