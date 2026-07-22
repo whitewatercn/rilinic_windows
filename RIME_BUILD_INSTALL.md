@@ -71,7 +71,7 @@ winget install python
 推荐直接运行仓库中的辅助脚本：
 
 ```powershell
-.\install_boost.bat
+.\install_boost.ps1
 ```
 
 
