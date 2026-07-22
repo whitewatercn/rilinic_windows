@@ -36,7 +36,7 @@ if errorlevel 1 (
 
 echo Verifying Boost archive...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$actual = (Get-FileHash -LiteralPath $env:BOOST_ARCHIVE -Algorithm SHA256).Hash.ToLowerInvariant(); if ($actual -ne $env:BOOST_EXPECTED_SHA256) { Write-Error ('SHA256 mismatch. Expected: ' + $env:BOOST_EXPECTED_SHA256 + '; actual: ' + $actual); exit 1 }"
+  "$ErrorActionPreference = 'Stop'; $sha256 = [System.Security.Cryptography.SHA256]::Create(); try { $stream = [System.IO.File]::OpenRead($env:BOOST_ARCHIVE); try { $actual = ([System.BitConverter]::ToString($sha256.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() } finally { $stream.Dispose() } } finally { $sha256.Dispose() }; if ($actual -ne $env:BOOST_EXPECTED_SHA256) { throw ('SHA256 mismatch. Expected: ' + $env:BOOST_EXPECTED_SHA256 + '; actual: ' + $actual) }"
 if errorlevel 1 (
   echo Error: Boost archive verification failed.
   exit /b 1
@@ -44,7 +44,7 @@ if errorlevel 1 (
 
 echo Extracting Boost source...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$ErrorActionPreference = 'Stop'; Expand-Archive -LiteralPath $env:BOOST_ARCHIVE -DestinationPath $env:BOOST_PARENT -Force"
+  "$ErrorActionPreference = 'Stop'; Add-Type -AssemblyName System.IO.Compression.FileSystem; $destinationRoot = [System.IO.Path]::GetFullPath($env:BOOST_PARENT) + [System.IO.Path]::DirectorySeparatorChar; $archive = [System.IO.Compression.ZipFile]::OpenRead($env:BOOST_ARCHIVE); try { foreach ($entry in $archive.Entries) { $entryPath = $entry.FullName.Replace('/', [System.IO.Path]::DirectorySeparatorChar); $targetPath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($destinationRoot, $entryPath)); if (-not $targetPath.StartsWith($destinationRoot, [System.StringComparison]::OrdinalIgnoreCase)) { throw ('Unsafe ZIP entry: ' + $entry.FullName) }; if ([System.String]::IsNullOrEmpty($entry.Name)) { [System.IO.Directory]::CreateDirectory($targetPath) | Out-Null } else { $targetDirectory = [System.IO.Path]::GetDirectoryName($targetPath); [System.IO.Directory]::CreateDirectory($targetDirectory) | Out-Null; [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $targetPath, $true) } } } finally { $archive.Dispose() }"
 if errorlevel 1 (
   echo Error: failed to extract Boost.
   exit /b 1

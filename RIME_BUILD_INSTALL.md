@@ -50,6 +50,22 @@ weasel-0.17.4.0.93eec2d-installer.exe
 - Python；
 - NSIS，用于生成 `.exe` 安装包；
 - Boost 1.84.0 源码。
+### 安装visual studio 2022 community
+```
+winget install Microsoft.VisualStudio.2022.Community             
+```
+### 安装cmake
+
+```
+winget install cmake
+```
+### 安装python
+
+
+```
+winget install python
+```
+
 ### 安装 Boost
 
 推荐直接运行仓库中的辅助脚本：
@@ -58,44 +74,13 @@ weasel-0.17.4.0.93eec2d-installer.exe
 .\install_boost.bat
 ```
 
-脚本使用 Windows PowerShell 下载官方 ZIP，并显示下载进度；随后校验 SHA256、解压到 `deps\boost_1_84_0`，然后编译 Boost。它不需要额外安装 aria2 或 7-Zip；下载、校验或解压任一步失败时都会立即停止。
-
-如果需要手工下载，可使用下面的 PowerShell 命令。
-
-本仓库的 CI 使用 Boost 1.84.0。推荐从 Boost 官方归档下载 1.84.0 ZIP。可以在 Developer PowerShell 中执行：
-
-```powershell
-Set-Location 'C:\Users\www\coding\20260719rilinic\rilinic_windows'
-New-Item -ItemType Directory -Force '.\deps' | Out-Null
-
-$boostArchive = Join-Path $env:TEMP 'boost_1_84_0.zip'
-$boostUrl = 'https://archives.boost.io/release/1.84.0/source/boost_1_84_0.zip'
-Invoke-WebRequest -Uri $boostUrl -OutFile $boostArchive
-
-$expectedHash = 'cc77eb8ed25da4d596b25e77e4dbb6c5afaac9cddd00dc9ca947b6b268cc76a4'
-$actualHash = (Get-FileHash -LiteralPath $boostArchive -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($actualHash -ne $expectedHash) {
-    throw "Boost 压缩包校验失败：$actualHash"
-}
-
-Expand-Archive -LiteralPath $boostArchive -DestinationPath '.\deps' -Force
-Test-Path '.\deps\boost_1_84_0\boost'
-Test-Path '.\deps\boost_1_84_0\bootstrap.bat'
-```
-
-最后两条命令都应输出 `True`。下载完成后，`env.bat` 中应配置：
-
-```bat
-set BOOST_ROOT=%WEASEL_ROOT%\deps\boost_1_84_0
-```
-
 
 `build.bat boost` 会自行运行 `bootstrap.bat` 和 `b2`，不需要预先手工编译 Boost。
 
 
 ### 安装 NSIS
 
-在仓库根目录运行辅助脚本。它会先检查默认安装位置；如果 NSIS 已安装则直接跳过，否则调用 winget 安装，并在安装失败时立即停止：
+在仓库根目录运行辅助脚本
 
 ```powershell
 .\install_nsis.bat
@@ -111,55 +96,23 @@ Test-Path "${env:ProgramFiles(x86)}\NSIS\Bin\makensis.exe"
 
 ## 3. 使用正确的命令行
 
-从开始菜单打开以下任一种 Visual Studio 开发终端，不要使用未加载 VS 环境的普通 PowerShell：
+从 Windows 开始菜单搜索并打开 **Developer PowerShell for VS 2022**。这是开始菜单快捷方式的名称，不是可以在普通 PowerShell 中输入的命令。
 
-```text
-Developer Command Prompt for VS 2022
-Developer PowerShell for VS 2022
-```
-
-无论使用哪种终端，都必须先切换到包含 `build.bat` 的仓库根目录。当前项目的实际路径为：
-
-```text
-C:\Users\www\coding\20260719rilinic\rilinic_windows
-```
-
-使用 Developer Command Prompt（CMD）时：
-
-```bat
-cd /d C:\Users\www\coding\20260719rilinic\rilinic_windows
-build.bat boost rime data opencc weasel installer
-```
-
-使用 Developer PowerShell 时：
+进入项目目录并确认 Visual Studio C++ 工具可用：
 
 ```powershell
 Set-Location 'C:\Users\www\coding\20260719rilinic\rilinic_windows'
+Get-Command msbuild.exe, cl.exe, cmake.exe, git.exe, bash.exe, python.exe
+Test-Path "${env:ProgramFiles(x86)}\NSIS\Bin\makensis.exe"
+```
+
+`Get-Command` 应列出所有程序路径，`Test-Path` 应输出 `True`。如果找不到 `cl.exe`，请先在 Visual Studio Installer 中为 Community 2022 安装“使用 C++ 的桌面开发”工作负载以及 v143、Windows SDK、ATL、MFC 组件。
+
+构建时必须使用 `.\build.bat`；PowerShell 不会默认执行当前目录中的同名脚本：
+
+```powershell
 .\build.bat boost rime data opencc weasel installer
 ```
-
-看到提示符 `PS C:\Users\www>` 时，表示仍在用户主目录，不是项目目录。PowerShell 也不会默认搜索当前目录中的脚本，所以即使已经进入项目目录，也要写 `.\build.bat`，不能只写 `build.bat`。
-
-本文后续以 CMD 语法展示环境检查命令；所有 `.\build.bat` 和 `.\xbuild.bat` 命令同时适用于 Developer PowerShell。
-
-确认关键工具可用：
-
-```bat
-where msbuild
-where cl
-where cmake
-where git
-where bash
-where python
-```
-
-再检查 NSIS：
-
-```bat
-if exist "%ProgramFiles(x86)%\NSIS\Bin\makensis.exe" (echo NSIS OK) else (echo NSIS NOT FOUND)
-```
-
-如果找不到 `msbuild` 或 `cl`，通常是没有使用 Visual Studio Developer Command Prompt，或者未安装 C++ 工作负载。
 
 ## 4. 初始化源码子模块
 
